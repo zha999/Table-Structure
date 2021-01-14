@@ -79,5 +79,6 @@ def remove_table_lines(imgPath, remove_horizontal=True, remove_vertical=True):
     return 0
 
 if __name__ == "__main__":
-    image_Path = r"C:\Users\zhak\GFTE\output\img\0801.2890v1.1.png"
+    image_Path = r"\Users\Shared\Files\ From\ d.localized\2020fall\ study\thinklab\code\newGFTE\SciTSR\train\img\0704.2596v1.2.png"
+    #image_Path = r"C:\Users\zhak\GFTE\output\img\0801.2890v1.1.png"
     remove_table_lines(image_Path, True, True)
