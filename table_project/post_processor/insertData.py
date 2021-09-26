@@ -56,7 +56,13 @@ def if_same_row(node1, node2):
 
     return False
 
-
+def check_same_col(t_data, header_node, t_col_divide_index, index):
+    for k in range(t_col_divide_index[index]+1):
+        if(index!=0 and k<=t_col_divide_index[index-1]):
+            continue
+        if(if_same_col(t_data[k], header_node)):
+            return True
+    return False
 
 def insert_data(t_data, header, attributer, max_header, max_attr):
     # print("t_data:{}".format(t_data))
@@ -108,7 +114,8 @@ def insert_data(t_data, header, attributer, max_header, max_attr):
         # 首先查找是否有能够对应的header
         flag_corr = False
         for j in range(len(max_header)):
-            if (if_same_col(t_data[t_col_divide_index[i]], max_header[j])):
+            #if (if_same_col(t_data[t_col_divide_index[i]], max_header[j])):
+            if (check_same_col(t_data, max_header[j], t_col_divide_index, i)):
                 for k in range(t_col_divide_index[i] + 1):
                     if (i != 0 and k <= t_col_divide_index[i - 1]):
                         continue
@@ -146,13 +153,13 @@ def insert_data(t_data, header, attributer, max_header, max_attr):
                 flag_right = False
                 if (t_data[t_col_divide_index[i]].pos[4] > xmax):
                     flag_right = True
-                # 将这列都投入到待处理列表中
-                for k in range(t_col_divide_index[i] + 1):
-                    if (i != 0 and k <= t_col_divide_index[i - 1]):
-                        continue
-                    t_data[k].start_col = -1
-                    t_data[k].end_col = -1
-                    col_wait_right.append(t_data[k])
+                    # 将这列都投入到待处理列表中
+                    for k in range(t_col_divide_index[i] + 1):
+                        if (i != 0 and k <= t_col_divide_index[i - 1]):
+                            continue
+                        t_data[k].start_col = -1
+                        t_data[k].end_col = -1
+                        col_wait_right.append(t_data[k])
 
             # 夹在中间
             if ((not flag_left) and (not flag_right)):

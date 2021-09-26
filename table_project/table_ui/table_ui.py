@@ -1,3 +1,6 @@
+import sys
+sys.path.append("/home/xxx/demo_test01/a")
+
 from tkinter import *
 from tkinter.filedialog import askopenfilename
 from PIL import Image, ImageTk
@@ -174,7 +177,7 @@ class Table_UI(object):
         return x_proportion, y_proportion
 
     def show_structure_result(self):
-        post_proceed(self.tmp_path)
+        post_proceed(self.tmp_path, False)
         if not os.path.exists(self.struct_res_file):
             assert("struct_res_file path not exists!")
             return
@@ -188,7 +191,7 @@ class Table_UI(object):
 
 
 
-def batch_process(root_path):
+def batch_process(root_path, if_cuda):
     if not os.path.exists(root_path):
         assert(False, "root path not exists")
         return
@@ -213,6 +216,6 @@ def batch_process(root_path):
     generate_seg_file(tmp_dir)
 
     # predict relationship and post-porcess
-    post_proceed(tmp_dir)
+    post_proceed(tmp_dir, if_cuda)
 
 

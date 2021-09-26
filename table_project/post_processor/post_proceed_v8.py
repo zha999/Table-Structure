@@ -9,30 +9,17 @@
 # 构建二维网格，填充data
 # 处理corner
 
-# from skimage.io import imread
-# from skimage.util import crop
-# from skimage.transform import rotate,resize,rescale
-import random
-import cv2
-import numpy as np
 import os
-import codecs
-from shapely.geometry import Point, Polygon
-# from torch.utils.data import Dataset, DataLoader
 import torch
 from torch_geometric.data import Data, Dataset, DataLoader
-from torch_scatter import scatter_mean
-import torch_geometric.transforms as GT
-import math
 import json
-import csv
 import codecs
-import numpy as np
 
 from post_processor.insertData import insert_data
 from post_processor.model import TbNet
 from post_processor.predsDataset import predsDataset
 from post_processor.tableDataset import tableDataset
+from post_processor.preds_correct_classificaition import classification
 
 
 # In[89]:
@@ -150,8 +137,9 @@ def construct_matrix(preds, data):
             
             preds[i] = 1
             # print("8修改了")
-    
-    
+
+    # 分级之后修改一些header 1/2->0
+    preds = classification(data, 0, preds)
     
     for i in range(len(preds)):
         s_node = edges[0][i]
@@ -593,7 +581,7 @@ def calculate_row_col(area_data, graph, row=True, col=False):
 from sklearn.metrics import confusion_matrix
 from HTMLTable import HTMLTable
 
-def post_proceed(root_path):
+def post_proceed(root_path, if_cuda):
 
     header_type = 0
     attr_type = 1
@@ -608,14 +596,23 @@ def post_proceed(root_path):
     input_num = 8
     vocab_size = 39
     num_text_features = 64
-    device = torch.device("cpu" )
-    h_model = TbNet(input_num, vocab_size, num_text_features,nclass) #.cuda()
-    h_pthfile = os.path.join(os.path.split(os.path.abspath(__file__))[0], "net_50_125.pth")
-    h_model.load_state_dict(torch.load(h_pthfile, map_location=torch.device('cpu')))
 
-    a_model = TbNet(input_num, vocab_size, num_text_features,nclass) #.cuda()
-    a_pthfile = os.path.join(os.path.split(os.path.abspath(__file__))[0], "net_50_102.pth") # './net_50_102.pth'
-    a_model.load_state_dict(torch.load(a_pthfile, map_location=torch.device('cpu')))
+    h_pthfile = os.path.join(os.path.split(os.path.abspath(__file__))[0], "net_50_125.pth")
+    a_pthfile = os.path.join(os.path.split(os.path.abspath(__file__))[0], "net_50_102.pth")  #
+
+    if(if_cuda):
+        h_model = TbNet(input_num, vocab_size, num_text_features, nclass, if_cuda).cuda()
+        h_model.load_state_dict(torch.load(h_pthfile))
+
+        a_model = TbNet(input_num, vocab_size, num_text_features, nclass, if_cuda).cuda()
+        a_model.load_state_dict(torch.load(a_pthfile))
+    else:
+        h_model = TbNet(input_num, vocab_size, num_text_features, nclass, False)
+        h_model.load_state_dict(torch.load(h_pthfile, map_location=torch.device('cpu')))
+
+        a_model = TbNet(input_num, vocab_size, num_text_features, nclass, False)
+        a_model.load_state_dict(torch.load(a_pthfile, map_location=torch.device('cpu')))
+
 
     header_loader = DataLoader(header_ds_test, batch_size = 1)
     header_iter = iter(header_loader)
@@ -795,6 +792,3 @@ def post_proceed(root_path):
         
         print("已完成")
 
-
-# root_path = '../Test'
-# post_proceed(root_path)
