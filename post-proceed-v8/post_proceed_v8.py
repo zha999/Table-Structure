@@ -9,13 +9,6 @@
 # 构建二维网格，填充data
 # 处理corner
 
-<<<<<<< HEAD
-import os
-import torch
-from torch_geometric.data import Data, Dataset, DataLoader
-import json
-import codecs
-=======
 # from skimage.io import imread
 # from skimage.util import crop
 # from skimage.transform import rotate,resize,rescale
@@ -35,16 +28,12 @@ import json
 import csv
 import codecs
 import numpy as np
->>>>>>> b549f23fbcd5bdb0522feb3cd975c2c0650a091a
 
-from post_processor.insertData import insert_data
-from post_processor.model import TbNet
-from post_processor.predsDataset import predsDataset
-from post_processor.tableDataset import tableDataset
-<<<<<<< HEAD
-from post_processor.preds_correct_classificaition import classification
-=======
->>>>>>> b549f23fbcd5bdb0522feb3cd975c2c0650a091a
+from insertData import insert_data
+from model import TbNet
+from predsDataset import predsDataset
+from tableDataset import tableDataset
+from preds_correct_classificaition import classification
 
 
 # In[89]:
@@ -109,80 +98,115 @@ h_row_matrix, h_col_matrix = construct_matrix(preds_header, data_header)
 # start_node为正在处理的表格的节点在data.x中的起始位置
 # part_id为正在处理的部分的id列表
 
+import numpy as np
+
+# preds = preds.detach().cpu().numpy()
+# label = data.y.detach().cpu().numpy()
+# preds类型为numpy.ndarray,元素个数与data的edge边数相同
+
+'''
+测试时batchsize均取1
+data.nodenum
+data.x[j]
+data.plaintext[0][j].decode('utf-8')
+data.edge_index的格式为[2][该batch所有表格的边的拼接]
+'''
+
+'''
+construct_matrix使用时
+h_row_matrix, h_col_matrix = construct_matrix(preds_header, data_header)
+'''
+
+
+# index为该batch的第index个表格
+# start_edge为正在处理的表格的边在data.edge_index中的起始位置
+# start_node为正在处理的表格的节点在data.x中的起始位置
+# part_id为正在处理的部分的id列表
+
 def construct_matrix(preds, data):
     # 构造邻接矩阵，设节点数目为n，则矩阵规模为n*n
     # data.nodenum为节点数目
     nodenum = data.nodenum
-    edge_num = nodenum*(nodenum-1) # 完全图
+    edge_num = nodenum * (nodenum - 1)  # 完全图
     edges = data.edge_index
-    
+
     # data.x是节点的位置信息，[xmin,xmax,ymin,ymax,xmid,ymid,width,height]
     x = data.x
-    row_matrix = np.zeros((nodenum, nodenum),dtype=np.int)
-    col_matrix = np.zeros((nodenum, nodenum),dtype=np.int)
-    
-    
+    row_matrix = np.zeros((nodenum, nodenum), dtype=np.int)
+    col_matrix = np.zeros((nodenum, nodenum), dtype=np.int)
+
     for i in range(len(preds)):
         s_node = edges[0][i]
         e_node = edges[1][i]
-    
-        #如果垂直方向有重叠则判断为同列    
-        if(preds[i]!=2 and (((x[s_node][0]>x[e_node][0] or x[s_node][0]>=x[e_node][0]) and (x[s_node][0]<x[e_node][1] or x[s_node][0]<=x[e_node][1])) or 
-           ((x[s_node][0]<x[e_node][0] or x[s_node][0]<=x[e_node][0]) and (x[s_node][1]>x[e_node][0] or x[s_node][1]>=x[e_node][0])))):
+
+        # 如果垂直方向有重叠则判断为同列
+        if (preds[i] != 2 and (((x[s_node][0] > x[e_node][0] or x[s_node][0] >= x[e_node][0]) and (
+                x[s_node][0] < x[e_node][1] or x[s_node][0] <= x[e_node][1])) or
+                               ((x[s_node][0] < x[e_node][0] or x[s_node][0] <= x[e_node][0]) and (
+                                       x[s_node][1] > x[e_node][0] or x[s_node][1] >= x[e_node][0])))):
+            # print("preds[i]:{}".format(preds[i]))
+            # print("i:{},1修改了".format(i))
+            # print("{}-{},{}-{}".format(data.id_list[s_node].item(), data.id_list[e_node].item(), data.plaintext[0][s_node].decode('utf-8'), data.plaintext[0][e_node].decode('utf-8')))
 
             preds[i] = 2
-            
-        if(preds[i]!=2 and (((x[e_node][0]>x[s_node][0] or x[e_node][0]>=x[s_node][0]) and (x[e_node][0]<x[s_node][1] or x[e_node][0]<=x[s_node][1])) or 
-           ((x[e_node][0]<x[s_node][0] or x[e_node][0]<=x[s_node][0]) and (x[e_node][1]>x[s_node][0] or x[e_node][1]>=x[s_node][0])))):
 
+        if (preds[i] != 2 and (((x[e_node][0] > x[s_node][0] or x[e_node][0] >= x[s_node][0]) and (
+                x[e_node][0] < x[s_node][1] or x[e_node][0] <= x[s_node][1])) or
+                               ((x[e_node][0] < x[s_node][0] or x[e_node][0] <= x[s_node][0]) and (
+                                       x[e_node][1] > x[s_node][0] or x[e_node][1] >= x[s_node][0])))):
             preds[i] = 2
             # print("i:{},2修改了".format(i))
 
         # e_node的中心点x坐标在s_node的xmin～xmax之间
-        if(preds[i]!=2 and (x[s_node][0]<x[e_node][4] and x[s_node][1]>x[e_node][4])):
-
+        if (preds[i] != 2 and (x[s_node][0] < x[e_node][4] and x[s_node][1] > x[e_node][4])):
             preds[i] = 2
             # print("3修改了")
 
         # s_node的中心点x坐标在e_node的xmin～xmax之间
-        if(preds[i]!=2 and (x[e_node][0]<x[s_node][4] and x[e_node][1]>x[s_node][4])):
-
+        if (preds[i] != 2 and (x[e_node][0] < x[s_node][4] and x[e_node][1] > x[s_node][4])):
             preds[i] = 2
             # print("4修改了")
 
-        
+        '''
+        #注释掉是因为水平方向的框挨得比较紧，不同行的框很容易有重叠
+        #如果水平方向有重叠则判断为同行
+        if(preds[i]!=1 and (((x[s_node][3]<x[e_node][3] or x[s_node][3]<=x[e_node][3]) and (x[s_node][3]>x[e_node][2] or x[s_node][3]>=x[e_node][2])) or 
+           ((x[s_node][2]<x[e_node][3] or x[s_node][2]<=x[e_node][3]) and (x[s_node][2]>x[e_node][2] or x[s_node][2]>=x[e_node][2])))):
+
+            preds[i] = 1
+            print("5修改了")
+
+        if(preds[i]!=1 and (((x[e_node][3]<x[s_node][3] or x[e_node][3]<=x[s_node][3]) and (x[e_node][3]>x[s_node][2] or x[e_node][3]>=x[s_node][2])) or 
+           ((x[e_node][2]<x[s_node][3] or x[e_node][2]<=x[s_node][3]) and (x[e_node][2]>x[s_node][2] or x[e_node][2]>=x[s_node][2])))):
+
+            preds[i] = 1
+            print("6修改了")
+        '''
+
         # e_node的中心点y坐标在s_node的ymin～ymax之间
-        if(preds[i]!=1 and (x[s_node][2]<x[e_node][5] and x[s_node][3]>x[e_node][5])):
-            
+        if (preds[i] != 1 and (x[s_node][2] < x[e_node][5] and x[s_node][3] > x[e_node][5])):
             preds[i] = 1
             # print("7修改了")
-            
+
         # s_node的中心点y坐标在e_node的ymin～ymax之间
-        if(preds[i]!=1 and (x[e_node][2]<x[s_node][5] and x[e_node][3]>x[s_node][5])):
-            
+        if (preds[i] != 1 and (x[e_node][2] < x[s_node][5] and x[e_node][3] > x[s_node][5])):
             preds[i] = 1
             # print("8修改了")
-<<<<<<< HEAD
 
     # 分级之后修改一些header 1/2->0
     preds = classification(data, 0, preds)
-=======
-    
-    
->>>>>>> b549f23fbcd5bdb0522feb3cd975c2c0650a091a
-    
+
     for i in range(len(preds)):
         s_node = edges[0][i]
         e_node = edges[1][i]
-        if(row_matrix[s_node][e_node]==0):
-            row_matrix[s_node][e_node] = 1 if preds[i]==1 else 0
-            row_matrix[e_node][s_node] = 1 if preds[i]==1 else 0
-        if(col_matrix[s_node][e_node]==0):
-            col_matrix[s_node][e_node] = 1 if preds[i]==2 else 0
-            col_matrix[e_node][s_node] = 1 if preds[i]==2 else 0
-        #print("s_node:{}, e_node:{}, col_matrix[s_node][e_node]:{}".format(s_node,e_node,col_matrix[s_node][e_node]))
-        
-                
+        if (row_matrix[s_node][e_node] == 0):
+            row_matrix[s_node][e_node] = 1 if preds[i] == 1 else 0
+            row_matrix[e_node][s_node] = 1 if preds[i] == 1 else 0
+        if (col_matrix[s_node][e_node] == 0):
+            col_matrix[s_node][e_node] = 1 if preds[i] == 2 else 0
+            col_matrix[e_node][s_node] = 1 if preds[i] == 2 else 0
+        # print("s_node:{}, e_node:{}, col_matrix[s_node][e_node]:{}".format(s_node,e_node,col_matrix[s_node][e_node]))
+
     return row_matrix, col_matrix, preds
 
 
@@ -418,7 +442,7 @@ def wirtejson(node_list, root_path, name):
     json_content['cells'] = cells
     json_file_path = os.path.join(root_path, name+".json")
     with open(json_file_path, 'w') as f:
-        json.dump(json_content, f) # , ensure_ascii=False
+        json.dump(json_content, f, ensure_ascii=False)
     f.close()
 
 def format_html(structs):
@@ -556,7 +580,7 @@ def construct_html(root_path, table_node, imgfn):
     })
 
     html = table.to_html()
-    with open(os.path.join(root_path, 'table_html', imgfn +'.html'), 'w', encoding="utf-8-sig") as f:
+    with open(os.path.join(root_path, 'table_html/')+ imgfn +'.html', 'w', encoding="utf-8-sig") as f:
             f.write(html)
     f.close()
 
@@ -578,7 +602,7 @@ def calculate_row_col(area_data, graph, row=True, col=False):
         r = np.zeros((maxn,maxn), dtype = np.int)
 
         for j in range(area_data.nodenum):
-            some[1][j] = j+1
+            some[1][j] = j+1;
 
         adj_matrix = np.zeros((area_data.nodenum+1,area_data.nodenum+1), dtype = np.int)
         for p in range(area_data.nodenum):
@@ -611,11 +635,7 @@ def calculate_row_col(area_data, graph, row=True, col=False):
 from sklearn.metrics import confusion_matrix
 from HTMLTable import HTMLTable
 
-<<<<<<< HEAD
-def post_proceed(root_path, if_cuda):
-=======
 def post_proceed(root_path):
->>>>>>> b549f23fbcd5bdb0522feb3cd975c2c0650a091a
 
     header_type = 0
     attr_type = 1
@@ -630,34 +650,14 @@ def post_proceed(root_path):
     input_num = 8
     vocab_size = 39
     num_text_features = 64
-<<<<<<< HEAD
-
-    h_pthfile = os.path.join(os.path.split(os.path.abspath(__file__))[0], "net_50_125.pth")
-    a_pthfile = os.path.join(os.path.split(os.path.abspath(__file__))[0], "net_50_102.pth")  #
-
-    if(if_cuda):
-        h_model = TbNet(input_num, vocab_size, num_text_features, nclass, if_cuda).cuda()
-        h_model.load_state_dict(torch.load(h_pthfile))
-
-        a_model = TbNet(input_num, vocab_size, num_text_features, nclass, if_cuda).cuda()
-        a_model.load_state_dict(torch.load(a_pthfile))
-    else:
-        h_model = TbNet(input_num, vocab_size, num_text_features, nclass, False)
-        h_model.load_state_dict(torch.load(h_pthfile, map_location=torch.device('cpu')))
-
-        a_model = TbNet(input_num, vocab_size, num_text_features, nclass, False)
-        a_model.load_state_dict(torch.load(a_pthfile, map_location=torch.device('cpu')))
-
-=======
     device = torch.device("cpu" )
-    h_model = TbNet(input_num, vocab_size, num_text_features,nclass) #.cuda()
-    h_pthfile = os.path.join(os.path.split(os.path.abspath(__file__))[0], "net_50_125.pth")
-    h_model.load_state_dict(torch.load(h_pthfile, map_location=torch.device('cpu')))
+    h_model = TbNet(input_num, vocab_size, num_text_features,nclass).cuda()
+    h_pthfile = './net_50_125.pth'
+    h_model.load_state_dict(torch.load(h_pthfile))
 
-    a_model = TbNet(input_num, vocab_size, num_text_features,nclass) #.cuda()
-    a_pthfile = os.path.join(os.path.split(os.path.abspath(__file__))[0], "net_50_102.pth") # './net_50_102.pth'
-    a_model.load_state_dict(torch.load(a_pthfile, map_location=torch.device('cpu')))
->>>>>>> b549f23fbcd5bdb0522feb3cd975c2c0650a091a
+    a_model = TbNet(input_num, vocab_size, num_text_features,nclass).cuda()
+    a_pthfile = './net_50_102.pth'
+    a_model.load_state_dict(torch.load(a_pthfile))
 
     header_loader = DataLoader(header_ds_test, batch_size = 1)
     header_iter = iter(header_loader)
@@ -668,8 +668,7 @@ def post_proceed(root_path):
     t_data_loader = DataLoader(t_data_ds_test, batch_size=1)
     t_data_iter = iter(t_data_loader)
 
-    header_loader_length = len(header_loader)
-    for i in range(header_loader_length):
+    for i in range(len(header_loader)):
         print(len(header_loader))
 
         print("这是第{}个表格".format(i))
@@ -831,15 +830,11 @@ def post_proceed(root_path):
             id_t_d.append(t_data_list[k].id)
             table_node.append(t_data_list[k])
 
-        json_file_name = os.path.basename(t_data.imgfn[0].decode('utf-8-sig')).split('.')[0]
-        wirtejson(table_node, os.path.join(root_path,'pred_structure'), json_file_name)
-        construct_html(root_path, table_node, json_file_name)
+        wirtejson(table_node, os.path.join(root_path,'pred_structure'), os.path.basename(t_data.imgfn[0].decode('utf-8-sig')))
+        construct_html(root_path, table_node, os.path.basename(t_data.imgfn[0].decode('utf-8-sig')))
         
         print("已完成")
 
-<<<<<<< HEAD
-=======
 
-# root_path = '../Test'
-# post_proceed(root_path)
->>>>>>> b549f23fbcd5bdb0522feb3cd975c2c0650a091a
+root_path = '../Test'
+post_proceed(root_path)

@@ -44,6 +44,16 @@ def if_same_col(node1, node2):
         return True
     if (node2.pos[4] > node1.pos[0] and node2.pos[4] < node1.pos[1]):
         return True
+    if (((node1.pos[0] > node2.pos[0] or node1.pos[0] >= node2.pos[0]) and (
+            node1.pos[0] < node2.pos[1] or node1.pos[0] <= node2.pos[1])) or
+            ((node1.pos[0] < node2.pos[0] or node1.pos[0] <= node2.pos[0]) and (
+                    node1.pos[1] > node2.pos[0] or node1.pos[1] >= node2.pos[0]))):
+        return True
+    if (((node2.pos[0] > node1.pos[0] or node2.pos[0] >= node1.pos[0]) and (
+            node2.pos[0] < node1.pos[1] or node2.pos[0] <= node1.pos[1])) or
+            ((node2.pos[0] < node1.pos[0] or node2.pos[0] <= node1.pos[0]) and (
+                    node2.pos[1] > node1.pos[0] or node2.pos[1] >= node1.pos[0]))):
+        return True
 
     return False
 
@@ -56,7 +66,6 @@ def if_same_row(node1, node2):
 
     return False
 
-<<<<<<< HEAD
 def check_same_col(t_data, header_node, t_col_divide_index, index):
     for k in range(t_col_divide_index[index]+1):
         if(index!=0 and k<=t_col_divide_index[index-1]):
@@ -64,9 +73,7 @@ def check_same_col(t_data, header_node, t_col_divide_index, index):
         if(if_same_col(t_data[k], header_node)):
             return True
     return False
-=======
 
->>>>>>> b549f23fbcd5bdb0522feb3cd975c2c0650a091a
 
 def insert_data(t_data, header, attributer, max_header, max_attr):
     # print("t_data:{}".format(t_data))
@@ -118,12 +125,8 @@ def insert_data(t_data, header, attributer, max_header, max_attr):
         # 首先查找是否有能够对应的header
         flag_corr = False
         for j in range(len(max_header)):
-<<<<<<< HEAD
-            #if (if_same_col(t_data[t_col_divide_index[i]], max_header[j])):
             if (check_same_col(t_data, max_header[j], t_col_divide_index, i)):
-=======
-            if (if_same_col(t_data[t_col_divide_index[i]], max_header[j])):
->>>>>>> b549f23fbcd5bdb0522feb3cd975c2c0650a091a
+            # if (if_same_col(t_data[t_col_divide_index[i]], max_header[j])):
                 for k in range(t_col_divide_index[i] + 1):
                     if (i != 0 and k <= t_col_divide_index[i - 1]):
                         continue
@@ -161,7 +164,6 @@ def insert_data(t_data, header, attributer, max_header, max_attr):
                 flag_right = False
                 if (t_data[t_col_divide_index[i]].pos[4] > xmax):
                     flag_right = True
-<<<<<<< HEAD
                     # 将这列都投入到待处理列表中
                     for k in range(t_col_divide_index[i] + 1):
                         if (i != 0 and k <= t_col_divide_index[i - 1]):
@@ -169,15 +171,6 @@ def insert_data(t_data, header, attributer, max_header, max_attr):
                         t_data[k].start_col = -1
                         t_data[k].end_col = -1
                         col_wait_right.append(t_data[k])
-=======
-                # 将这列都投入到待处理列表中
-                for k in range(t_col_divide_index[i] + 1):
-                    if (i != 0 and k <= t_col_divide_index[i - 1]):
-                        continue
-                    t_data[k].start_col = -1
-                    t_data[k].end_col = -1
-                    col_wait_right.append(t_data[k])
->>>>>>> b549f23fbcd5bdb0522feb3cd975c2c0650a091a
 
             # 夹在中间
             if ((not flag_left) and (not flag_right)):

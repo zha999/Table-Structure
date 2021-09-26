@@ -5,11 +5,7 @@ import torch.nn as nn
 
 
 class TbNet(torch.nn.Module):
-<<<<<<< HEAD
-    def __init__(self, num_node_features, vocab_size, num_text_features, num_classes, if_cuda):
-=======
     def __init__(self, num_node_features, vocab_size, num_text_features, num_classes):
->>>>>>> b549f23fbcd5bdb0522feb3cd975c2c0650a091a
         super(TbNet, self).__init__()
         self.conv1 = GCNConv(num_node_features, 64)
         self.conv2 = GCNConv(64, 64)
@@ -20,10 +16,6 @@ class TbNet(torch.nn.Module):
         self.lin_img = torch.nn.Linear(64 * 2, 64)  # pair 到 单个
         self.lin_text = torch.nn.Linear(64 * 2, 64)  # pair 到 单个
         self.lin_final = torch.nn.Linear(64 * 3, num_classes)
-<<<<<<< HEAD
-        self.if_cuda = if_cuda
-=======
->>>>>>> b549f23fbcd5bdb0522feb3cd975c2c0650a091a
 
         ks = [3, 3, 3]
         ps = [1, 1, 1]
@@ -82,24 +74,12 @@ class TbNet(torch.nn.Module):
 
     def forward(self, data):
         x, edge_index, xtext, img, nodenum, imgpos = data.x, data.edge_index, data.xtext, data.img, data.nodenum, data.imgpos
-<<<<<<< HEAD
-
-        if(self.if_cuda):
-            x = x.cuda()
-            edge_index = edge_index.cuda()
-            xtext = xtext.cuda()
-            img = img.cuda()
-            nodenum = nodenum.cuda()
-            imgpos = imgpos.cuda()
-
-=======
-        # x = x.cuda()
-        # edge_index = edge_index.cuda()
-        # xtext = xtext.cuda()
-        # img = img.cuda()
-        # nodenum = nodenum.cuda()
-        # imgpos = imgpos.cuda()
->>>>>>> b549f23fbcd5bdb0522feb3cd975c2c0650a091a
+        x = x.cuda()
+        edge_index = edge_index.cuda()
+        xtext = xtext.cuda()
+        img = img.cuda()
+        nodenum = nodenum.cuda()
+        imgpos = imgpos.cuda()
         x = self.conv1(x, edge_index)
         x = F.relu(x)
         x = self.conv2(x, edge_index)
